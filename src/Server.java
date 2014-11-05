@@ -17,7 +17,7 @@ public class Server  {
 		while(true) {
 			Socket client = socket.accept();
 			
-			DataOutputStream clientOutStream = new DataOutputStream(new BufferedOutputStream(client.getOutputStream()));
+			DataOutputStream clientOutStream = new DataOutputStream(client.getOutputStream());
 			
 			clients.put(client, clientOutStream);
 			
@@ -35,5 +35,32 @@ public class Server  {
 	
 	Enumeration getClients() {
 		return clients.elements();
+	}
+	
+	public void sendAll(String message) {
+		synchronized(clients) {
+			for(Enumeration clientEnum = getClients(); clientEnum.hasMoreElements();) {
+				DataOutputStream out = (DataOutputStream)clientEnum.nextElement();
+				try {
+					out.writeUTF(message);
+				}
+				catch (IOException ioe) {
+					ioe.printStackTrace();
+				}
+			}
+		}
+	}
+
+	
+	public void removeClient(Socket client) {
+		synchronized(clients) {
+			clients.remove(client);
+			try {
+				client.close();
+			}
+			catch(IOException ioe) {
+				ioe.printStackTrace();
+			}
+		}
 	}
 }

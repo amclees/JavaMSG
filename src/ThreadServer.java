@@ -21,12 +21,13 @@ public class ThreadServer extends Thread {
 		try {
 			DataInputStream in = new DataInputStream(client.getInputStream());
 			
-			//String msg = in.readUTF();
+			String msg = in.readUTF();
+			System.out.println("Got MSG");
 			
-			server.sendAll("spam");
+			server.sendAll(msg);
 		}
 		catch(EOFException eof) {
-			
+			eof.printStackTrace();
 		}
 		catch(IOException ioe) {
 			ioe.printStackTrace();

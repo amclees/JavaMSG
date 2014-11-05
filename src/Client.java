@@ -16,15 +16,12 @@ import java.util.*;
 import java.io.*;
 
 
-public class Client extends Application implements Runnable{
-	private Socket server;
-	private DataInputStream in;
-	private DataOutputStream out;
-	private Text msgContent;
+public class Client extends Application {
+
 	
 	@Override
 	public void start(Stage primaryStage) {
-		Client client = new Client();
+		ClientThread client = new ClientThread();
 		/*
 		 * Create Main Chat Scene
 		 */
@@ -40,9 +37,9 @@ public class Client extends Application implements Runnable{
 		messages.setPrefSize(350, 300);
 		messages.setVvalue(1);
 		
-		msgContent = new Text("Hello World \n Hello World");
-		msgContent.setWrappingWidth(250);
-		messages.setContent(msgContent);
+		client.msgContent = new Text("Hello World \n Hello World");
+		client.msgContent.setWrappingWidth(250);
+		messages.setContent(client.msgContent);
 		
 		mainPane.add(messages, 0, 0);
 		
@@ -79,6 +76,7 @@ public class Client extends Application implements Runnable{
 		
 		loginPane.add(new Label("Port: "), 2, 1);
 		TextField portField = new TextField();
+		portField.setText("25568");
 		loginPane.add(portField, 2, 2);
 		
 		loginPane.add(new Label("Host Address: "), 2, 3);
@@ -126,6 +124,7 @@ public class Client extends Application implements Runnable{
 			if (e.getCode().equals(KeyCode.ENTER)) {
 				client.sendMsg(msg.getText());
 				messages.setVvalue(1);
+				msg.setText("");
 			}
 		});
 		
@@ -136,41 +135,5 @@ public class Client extends Application implements Runnable{
 		primaryStage.setResizable(false);
 		primaryStage.show();
 	}
-	public void login(Stage stage, Scene main, String username, String password, String portString, String host) {
-		try {
-			int port = Integer.parseInt(portString);
-			this.server = new Socket(host, port);
-			
-			this.in = new DataInputStream(server.getInputStream());
-			this.out = new DataOutputStream(server.getOutputStream());
-			stage.setScene(main);
-			new Thread(this).start();
-		}
-		catch (NumberFormatException e) {
-			System.out.println("Invalid Port");
-			return;
-		}
-		catch (IOException e) {
-			System.out.println("Error Connecting to Server");
-			return;
-		}
-	}
-	public void run() {
-		try {
-			while (true) {
-				String msg = in.readUTF();
-				msgContent.setText(msgContent.getText() + msg + "\n");
-			}
-		} 
-		catch(IOException ioe) {
-			System.out.println(ioe); 
-		}
-	}
-	public void sendMsg(String msg) {
-		try {
-			out.writeUTF(msg);
-		} catch (IOException ioe) {
-			ioe.printStackTrace();
-		}
-	}
+
 }

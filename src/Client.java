@@ -31,6 +31,7 @@ public class Client extends Application {
 		messages.setVbarPolicy(ScrollBarPolicy.ALWAYS);
 		messages.setHbarPolicy(ScrollBarPolicy.NEVER);
 		messages.setPrefSize(350, 300);
+		messages.setVvalue(1);
 		
 		Text msgContent = new Text("Hello World \n Hello World");
 		msgContent.setWrappingWidth(250);
@@ -114,6 +115,7 @@ public class Client extends Application {
 			if (e.getCode().equals(KeyCode.ENTER)) {
 				msgContent.setText(msgContent.getText() + "\n" + msg.getText());
 				msg.setText("");
+				messages.setVvalue(1);
 				//Submit text to server
 			}
 		});

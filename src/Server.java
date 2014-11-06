@@ -21,6 +21,7 @@ public class Server  {
 			
 			clients.put(client, clientOutStream);
 			
+			System.out.println("Accepted Connection");
 			new ThreadServer(this, client);
 		}
 	}
@@ -43,9 +44,11 @@ public class Server  {
 				DataOutputStream out = (DataOutputStream)clientEnum.nextElement();
 				try {
 					out.writeUTF(message);
+					System.out.println("Wrote message to client.");
 				}
 				catch (IOException ioe) {
 					ioe.printStackTrace();
+					System.out.println("Failed to write message to client!");
 				}
 			}
 		}

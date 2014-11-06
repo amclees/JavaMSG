@@ -1,5 +1,6 @@
 import javafx.*;
 import javafx.application.*;
+import javafx.concurrent.Task;
 import javafx.geometry.*;
 import javafx.stage.*;
 import javafx.scene.*;
@@ -17,11 +18,14 @@ import java.io.*;
 
 
 public class Client extends Application {
-
-	
+	public static Task<Void> listen;
+	private static Socket server;
+	private static DataInputStream in;
+	private static DataOutputStream out;
+	public static Text msgContent;
 	@Override
 	public void start(Stage primaryStage) {
-		ClientThread client = new ClientThread();
+
 		/*
 		 * Create Main Chat Scene
 		 */
@@ -37,9 +41,10 @@ public class Client extends Application {
 		messages.setPrefSize(350, 300);
 		messages.setVvalue(1);
 		
-		client.msgContent = new Text("Hello World \n Hello World");
-		client.msgContent.setWrappingWidth(250);
-		messages.setContent(client.msgContent);
+		msgContent = new Text("Welcome to JavaMSG\n"); //work on this
+		
+		msgContent.setWrappingWidth(250);
+		messages.setContent(msgContent);
 		
 		mainPane.add(messages, 0, 0);
 		
@@ -109,7 +114,8 @@ public class Client extends Application {
 		Scene register = new Scene(registerPane, 720, 480);
 		
 		submitLogin.setOnAction(e -> {
-			client.login(primaryStage, main, userField.getText(), passField.getText(), portField.getText(), serverField.getText());
+			login(userField.getText(), passField.getText());
+			primaryStage.setScene(main);
 		});
 		
 		registerBtn.setOnAction(e -> {
@@ -122,7 +128,7 @@ public class Client extends Application {
 	
 		msg.setOnKeyPressed(e -> {
 			if (e.getCode().equals(KeyCode.ENTER)) {
-				client.sendMsg(msg.getText());
+				sendMsg(msg.getText());
 				messages.setVvalue(1);
 				msg.setText("");
 			}
@@ -135,5 +141,50 @@ public class Client extends Application {
 		primaryStage.setResizable(false);
 		primaryStage.show();
 	}
-
+	public static void sendMsg(String msg) {
+		try {
+			out.writeUTF(msg);
+		} catch (Exception ioe) {
+			ioe.printStackTrace();
+		}
+	}
+	public static void login(String host, String portSt) {
+		try {
+			int port = Integer.parseInt(portSt);
+			server = new Socket(host, port);
+			
+			in = new DataInputStream(server.getInputStream());
+			out = new DataOutputStream(server.getOutputStream());
+		}
+		catch (NumberFormatException e) {
+			System.out.println("Invalid Port");
+			return;
+		}
+		catch (IOException e) {
+			System.out.println("Error Connecting to Server");
+			return;
+		}
+		listen = new Task<Void>() {
+			@Override protected Void call() throws Exception {
+				String msg = "";
+				try {
+					
+					while (true) {
+						msg = in.readUTF(); 
+						System.out.println("Read message from server");
+						updateMessage(msgContent.getText() + msg + "\n");
+						System.out.println("Added message from server to view");
+					}
+					
+				}
+				catch(Exception ioe) {
+					ioe.printStackTrace();
+					System.out.println("Failed to read message from server and add to view.");
+				}
+				return null;
+			}
+		};
+		listen.run();
+		msgContent.textProperty().bind(listen.messageProperty());
+	}
 }

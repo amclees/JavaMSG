@@ -7,6 +7,7 @@ public class ThreadServer extends Thread {
 	
 	public Server server;
 	public Socket client;
+
 	public long startTime;
 	
 	public ThreadServer(Server server, Socket client) {
@@ -18,22 +19,40 @@ public class ThreadServer extends Thread {
 	}
 	
 	public void run() {
+		String msg = "";
+		
+		DataInputStream  in = null;
 		try {
-			DataInputStream in = new DataInputStream(client.getInputStream());
-			
-			String msg = in.readUTF();
-			System.out.println("Got MSG");
+			in = new DataInputStream(client.getInputStream());
+		} catch (IOException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+			return;
+		}
+		while (true) {
+		boolean exit = true;
+		try {
+			msg = in.readUTF();
+			System.out.println("Got MSG " + msg);
 			
 			server.sendAll(msg);
+			
+			exit = false;
 		}
 		catch(EOFException eof) {
 			eof.printStackTrace();
+			System.out.println("EOF Error");
 		}
 		catch(IOException ioe) {
 			ioe.printStackTrace();
+			System.out.println("IO Error");
 		}
-		finally {
+		
+		if (exit) {
 			server.removeClient(client);
+			System.out.println("Disconnected client");
+			break;
+		}
 		}
 	}
 	

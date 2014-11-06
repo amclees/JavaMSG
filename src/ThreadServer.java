@@ -1,7 +1,8 @@
-import java.net.*;
+import java.io.DataInputStream;
+import java.io.EOFException;
+import java.io.IOException;
+import java.net.Socket;
 import java.sql.*;
-import java.util.*;
-import java.io.*;
 
 public class ThreadServer extends Thread {
 	
@@ -20,14 +21,17 @@ public class ThreadServer extends Thread {
 	
 	public void run() {
 		String msg = "";
-		
 		DataInputStream  in = null;
+
 		try {
 			in = new DataInputStream(client.getInputStream());
+			
 		} catch (IOException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 			return;
+		} catch (Exception e) {
+			e.printStackTrace();
 		}
 		while (true) {
 		boolean exit = true;
@@ -35,6 +39,7 @@ public class ThreadServer extends Thread {
 			msg = in.readUTF();
 			System.out.println("Got MSG " + msg);
 			
+			server.log(msg);
 			server.sendAll(msg);
 			
 			exit = false;
@@ -47,8 +52,9 @@ public class ThreadServer extends Thread {
 			ioe.printStackTrace();
 			System.out.println("IO Error");
 		}
-		
+	
 		if (exit) {
+			
 			server.removeClient(client);
 			System.out.println("Disconnected client");
 			break;

@@ -1,31 +1,39 @@
-import javafx.*;
-import javafx.application.*;
-import javafx.concurrent.Task;
-import javafx.geometry.*;
-import javafx.stage.*;
-import javafx.scene.*;
-import javafx.scene.control.*;
-import javafx.scene.control.ScrollPane.*;
-import javafx.scene.input.KeyEvent;
-import javafx.scene.layout.*;
-import javafx.scene.text.*;
-import javafx.scene.paint.*;
-import javafx.scene.input.*;
+import java.io.DataInputStream;
 
-import java.net.*;
-import java.util.*;
-import java.io.*;
+import java.io.DataOutputStream;
+import java.io.IOException;
+import java.net.Socket;
+import java.net.SocketException;
+
+import javafx.application.Application;
+import javafx.beans.value.ChangeListener;
+import javafx.beans.value.ObservableValue;
+import javafx.concurrent.Task;
+import javafx.geometry.Insets;
+import javafx.geometry.Pos;
+import javafx.scene.Scene;
+import javafx.scene.control.Button;
+import javafx.scene.control.Label;
+import javafx.scene.control.PasswordField;
+import javafx.scene.control.ScrollPane;
+import javafx.scene.control.ScrollPane.ScrollBarPolicy;
+import javafx.scene.control.TextField;
+import javafx.scene.input.KeyCode;
+import javafx.scene.layout.GridPane;
+import javafx.scene.text.Font;
+import javafx.scene.text.Text;
+import javafx.stage.Stage;
 
 
 public class Client extends Application {
-	public static Task<Void> listen;
-	private static Socket server;
-	private static DataInputStream in;
-	private static DataOutputStream out;
+	public static Socket server;
+	public static DataInputStream in;
+	public static DataOutputStream out;
 	public static Text msgContent;
+	public static ScrollPane messages;
 	@Override
 	public void start(Stage primaryStage) {
-
+		
 		/*
 		 * Create Main Chat Scene
 		 */
@@ -34,7 +42,7 @@ public class Client extends Application {
 		mainPane.setAlignment(Pos.TOP_LEFT);
 		Scene main = new Scene(mainPane, 720, 480);
 		
-		ScrollPane messages = new ScrollPane();
+		messages = new ScrollPane();
 		messages.setFitToWidth(true); 
 		messages.setVbarPolicy(ScrollBarPolicy.ALWAYS);
 		messages.setHbarPolicy(ScrollBarPolicy.NEVER);
@@ -114,8 +122,9 @@ public class Client extends Application {
 		Scene register = new Scene(registerPane, 720, 480);
 		
 		submitLogin.setOnAction(e -> {
-			login(userField.getText(), passField.getText());
+			login(serverField.getText(), portField.getText());
 			primaryStage.setScene(main);
+			
 		});
 		
 		registerBtn.setOnAction(e -> {
@@ -129,11 +138,15 @@ public class Client extends Application {
 		msg.setOnKeyPressed(e -> {
 			if (e.getCode().equals(KeyCode.ENTER)) {
 				sendMsg(msg.getText());
-				messages.setVvalue(1);
 				msg.setText("");
 			}
 		});
-		
+		msgContent.textProperty().addListener(new ChangeListener<String>() {
+		    @Override
+		    public void changed(final ObservableValue<? extends String> observable, final String oldValue, final String newValue) {
+		    	messages.setVvalue(1);
+		    }
+		});
 		
 		Scene login = new Scene(loginPane, 720, 480);
 		primaryStage.setTitle("JavaMSG");
@@ -143,7 +156,21 @@ public class Client extends Application {
 	}
 	public static void sendMsg(String msg) {
 		try {
-			out.writeUTF(msg);
+			if(out != null) {
+				out.writeUTF(msg);
+			}
+		} catch(SocketException se) {
+			System.out.println("Closing Connection");
+			try {
+				out.close();
+				in.close();
+			} catch (Exception e) {
+				e.printStackTrace();
+				System.out.println("Error Closing Connection");
+				System.exit(5);
+			}
+			System.out.println("Server Closed");
+			System.exit(1);
 		} catch (Exception ioe) {
 			ioe.printStackTrace();
 		}
@@ -152,9 +179,33 @@ public class Client extends Application {
 		try {
 			int port = Integer.parseInt(portSt);
 			server = new Socket(host, port);
-			
 			in = new DataInputStream(server.getInputStream());
 			out = new DataOutputStream(server.getOutputStream());
+			Task<Void> listen = new Task<Void>() {
+				@Override protected Void call() throws Exception {
+					String msg = "";
+					try {
+						
+						while (true) {
+							msg = in.readUTF(); 
+							System.out.println("Read message from server");
+							updateMessage(msgContent.getText() + msg + "\n");
+						
+							System.out.println("Added message from server to view");
+						}
+						
+					}
+					catch(Exception ioe) {
+						ioe.printStackTrace();
+						System.out.println("Failed to read message from server and add to view.");
+					}
+					return null;
+				}
+			};
+			Thread th = new Thread(listen);
+	        th.setDaemon(true);
+	        th.start();
+	        msgContent.textProperty().bind(listen.messageProperty());
 		}
 		catch (NumberFormatException e) {
 			System.out.println("Invalid Port");
@@ -164,27 +215,8 @@ public class Client extends Application {
 			System.out.println("Error Connecting to Server");
 			return;
 		}
-		listen = new Task<Void>() {
-			@Override protected Void call() throws Exception {
-				String msg = "";
-				try {
-					
-					while (true) {
-						msg = in.readUTF(); 
-						System.out.println("Read message from server");
-						updateMessage(msgContent.getText() + msg + "\n");
-						System.out.println("Added message from server to view");
-					}
-					
-				}
-				catch(Exception ioe) {
-					ioe.printStackTrace();
-					System.out.println("Failed to read message from server and add to view.");
-				}
-				return null;
-			}
-		};
-		listen.run();
-		msgContent.textProperty().bind(listen.messageProperty());
+		
+		
+		
 	}
 }

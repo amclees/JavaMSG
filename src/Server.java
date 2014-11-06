@@ -8,8 +8,15 @@ import java.net.*;
 public class Server  {
 	public Hashtable clients = new Hashtable();
 	public ServerSocket socket;
+	public DataOutputStream logOut;
 	
 	public Server(int port) throws IOException {
+		try {
+			logOut = new DataOutputStream(new BufferedOutputStream(new FileOutputStream(new File("msg.log"))));
+		}
+		catch(Exception e) {
+			e.printStackTrace();
+		}
 		acceptConnections(port);
 	}
 	public void acceptConnections(int port) throws IOException {
@@ -53,7 +60,14 @@ public class Server  {
 			}
 		}
 	}
-
+	public void log(String msg) {
+		try {
+			logOut.writeUTF("\n" + msg);
+		} catch (IOException e) {
+			e.printStackTrace();
+			System.out.println("Unable to log message");
+		}
+	}
 	
 	public void removeClient(Socket client) {
 		synchronized(clients) {

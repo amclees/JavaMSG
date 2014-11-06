@@ -1,6 +1,7 @@
 import java.io.DataInputStream;
 import java.io.EOFException;
 import java.io.IOException;
+import java.net.InetAddress;
 import java.net.Socket;
 import java.sql.*;
 
@@ -22,12 +23,13 @@ public class ThreadServer extends Thread {
 	public void run() {
 		String msg = "";
 		DataInputStream  in = null;
-
+		InetAddress clientAddress = client.getInetAddress();
+		String username = "default"; //put username in here later
+		System.out.printf("Started new thread for client %s at %s%n", username, clientAddress);
 		try {
 			in = new DataInputStream(client.getInputStream());
 			
 		} catch (IOException e) {
-			// TODO Auto-generated catch block
 			e.printStackTrace();
 			return;
 		} catch (Exception e) {
@@ -37,9 +39,9 @@ public class ThreadServer extends Thread {
 		boolean exit = true;
 		try {
 			msg = in.readUTF();
-			System.out.println("Got MSG " + msg);
+			System.out.printf("Got MSG %s from %s at %s%n", msg, username, clientAddress);
 			
-			server.log(msg);
+			//server.log(msg);
 			server.sendAll(msg);
 			
 			exit = false;
@@ -49,8 +51,7 @@ public class ThreadServer extends Thread {
 			System.out.println("EOF Error");
 		}
 		catch(IOException ioe) {
-			ioe.printStackTrace();
-			System.out.println("IO Error");
+			System.out.println("Client Left");
 		}
 	
 		if (exit) {

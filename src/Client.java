@@ -188,7 +188,7 @@ public class Client extends Application {
 						
 						while (true) {
 							msg = in.readUTF(); 
-							System.out.println("Read message from server");
+							System.out.printf("Read message %s from server%n", msg);
 							updateMessage(msgContent.getText() + msg + "\n");
 						
 							System.out.println("Added message from server to view");

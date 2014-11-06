@@ -21,6 +21,8 @@ public class Server  {
 	}
 	public void acceptConnections(int port) throws IOException {
 		socket = new ServerSocket(port);
+		
+		System.out.printf("Accepting connections on port %d%n", port);
 		while(true) {
 			Socket client = socket.accept();
 			
@@ -28,9 +30,10 @@ public class Server  {
 			
 			clients.put(client, clientOutStream);
 			
-			System.out.println("Accepted Connection");
+			System.out.printf("Accepted Connection from default at %s%n", client.getInetAddress());
 			new ThreadServer(this, client);
 		}
+		
 	}
 	public static void main(String[] args) throws IOException {
 		if(args.length == 1) {
@@ -61,23 +64,23 @@ public class Server  {
 		}
 	}
 	public void log(String msg) {
-		try {
-			logOut.writeUTF("\n" + msg);
-		} catch (IOException e) {
-			e.printStackTrace();
-			System.out.println("Unable to log message");
-		}
+		System.out.println(msg);
+		//Possibly do more later
 	}
 	
 	public void removeClient(Socket client) {
 		synchronized(clients) {
+			System.out.printf("Removing client default at %s%n", client.getInetAddress());
 			clients.remove(client);
 			try {
 				client.close();
 			}
 			catch(IOException ioe) {
 				ioe.printStackTrace();
+				System.out.println("Failed to remove client.");
+				return;
 			}
+			System.out.println("Succeded in removing client.");
 		}
 	}
 }

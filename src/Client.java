@@ -125,5 +125,5 @@ public class Client extends Application {
 		primaryStage.show();
 	}
 	
-	
+
 }

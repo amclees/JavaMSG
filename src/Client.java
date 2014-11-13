@@ -4,6 +4,8 @@ import java.io.DataOutputStream;
 import java.io.IOException;
 import java.net.Socket;
 import java.net.SocketException;
+import java.security.Key;
+import java.security.NoSuchAlgorithmException;
 
 import javafx.application.Application;
 import javafx.beans.value.ChangeListener;
@@ -24,6 +26,10 @@ import javafx.scene.text.Font;
 import javafx.scene.text.Text;
 import javafx.stage.Stage;
 
+import javax.crypto.Cipher;
+import javax.crypto.NoSuchPaddingException;
+import javax.crypto.spec.SecretKeySpec;
+import javax.xml.bind.DatatypeConverter;
 
 public class Client extends Application {
 	public static Socket server;
@@ -31,9 +37,11 @@ public class Client extends Application {
 	public static DataOutputStream out;
 	public static Text msgContent;
 	public static ScrollPane messages;
+	public static TextField keyField;
+	public static String lastmsg;
 	@Override
-	public void start(Stage primaryStage) {
-		
+	public void start(Stage primaryStage) throws NoSuchAlgorithmException, NoSuchPaddingException {
+		lastmsg = ""; 
 		/*
 		 * Create Main Chat Scene
 		 */
@@ -59,8 +67,11 @@ public class Client extends Application {
 		TextField msg = new TextField();
 		mainPane.add(msg, 0, 1);
 		
+		Text keyDesc = new Text("Key:");
+		mainPane.add(keyDesc, 1, 1);
 		
-		
+		keyField = new TextField();
+		mainPane.add(keyField, 1, 2);
 		
 		/*
 		 * Create Login Pane
@@ -138,7 +149,11 @@ public class Client extends Application {
 		msg.setOnKeyPressed(e -> {
 			if (e.getCode().equals(KeyCode.ENTER)) {
 				sendMsg(msg.getText());
+				lastmsg = msg.getText();
 				msg.setText("");
+			}
+			if (e.getCode().equals(KeyCode.UP)) {
+				msg.setText(lastmsg);
 			}
 		});
 		msgContent.textProperty().addListener(new ChangeListener<String>() {
@@ -154,10 +169,21 @@ public class Client extends Application {
 		primaryStage.setResizable(false);
 		primaryStage.show();
 	}
+
 	public static void sendMsg(String msg) {
 		try {
 			if(out != null) {
-				out.writeUTF(msg);
+				if (keyField.getText().length() != 0) {
+					byte[] msga =  msg.getBytes();
+					byte[] key = keyField.getText().getBytes();
+					for(int i = 0; i < msga.length; i++) {
+						msga[i] = (byte)(key[i % key.length] ^ msga[i]);
+					}
+					out.writeUTF(DatatypeConverter.printBase64Binary(msga));
+				}
+				else {
+					out.writeUTF(msg);
+				}
 			}
 		} catch(SocketException se) {
 			System.out.println("Closing Connection");
@@ -187,7 +213,17 @@ public class Client extends Application {
 					try {
 						
 						while (true) {
-							msg = in.readUTF(); 
+							
+							msg = in.readUTF();
+							if (keyField.getText().length() != 0) {
+								byte[] msga = DatatypeConverter.parseBase64Binary(msg);
+								byte[] key = keyField.getText().getBytes();
+
+								for(int i = 0; i < msga.length; i++) {
+									msga[i] = (byte)(key[i % key.length] ^ msga[i]);
+								}
+								msg = new String(msga);
+							}
 							System.out.printf("Read message %s from server%n", msg);
 							updateMessage(msgContent.getText() + msg + "\n");
 						

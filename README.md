@@ -1,7 +1,7 @@
 JavaMSG
 =======
 
-Simple Java Messenger. Simple client/server and user login system eventually. Uses a basic implementation of the one-time pad to encrypt messages. Understand that this does NOT mean JavaMSG is secure; by the nature of the user entering a key that is converted to bytes from a string, this program is insecure. There are also probably many side-channel attacks possible. I am going to begin on the login system soon.
+Simple Java Messenger. Mostly written to give me a basic idea of how to use Java networking libraries.
 
 Distributions
 <br>

@@ -9,4 +9,4 @@ Distributions
 <br>
 <a href="https://www.dropbox.com/s/lt21p26f8hz6btv/client.jar?dl=1">Client.jar</a> for those who simple want to connect to a server.
 <br>
-Note that this program is not extremely well written, and lacks most features attributed to a chat program.
+Note that JavaMSG lacks most features attributed to a chat program. It also cannot handle large amounts of users since it creates one thread per client.
